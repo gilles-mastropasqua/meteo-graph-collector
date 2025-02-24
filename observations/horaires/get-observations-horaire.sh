@@ -37,11 +37,11 @@ echo "--------------------------------------------------------------"
 echo ""
 
 # Cleanup main table
-echo "🧹 Cleaning the main table: $OBSERVATIONS_HORAIRE_TABLE..."
-START_TIME=$(date +%s)
-psql "$DB_URL" -A -t -c "TRUNCATE TABLE \"$OBSERVATIONS_HORAIRE_TABLE\";" > /dev/null 2>&1
-END_TIME=$(date +%s)
-echo "✅ Main table cleaned in $((END_TIME - START_TIME)) seconds."
+# echo "🧹 Cleaning the main table: $OBSERVATIONS_HORAIRE_TABLE..."
+# START_TIME=$(date +%s)
+# psql "$DB_URL" -A -t -c "TRUNCATE TABLE \"$OBSERVATIONS_HORAIRE_TABLE\";" > /dev/null 2>&1
+# END_TIME=$(date +%s)
+# echo "✅ Main table cleaned in $((END_TIME - START_TIME)) seconds."
 
 # Create staging table if not exists
 echo "🛢️ Ensuring staging table exists..."
@@ -59,9 +59,10 @@ for FILE_URL in $FILE_URLS; do
     START_TIME=$(date +%s)
 
     REQUEST_ID=$(date +%s%N)
-    COMPRESSED_FILE="$TMP_DIR/observations_${REQUEST_ID}.gz"
-    CSV_FILE="$TMP_DIR/observations_${REQUEST_ID}.csv"
-    TEMP_FILE="$TMP_DIR/observations_${REQUEST_ID}_transformed.csv"
+    COMPRESSED_FILE="${TMP_DIR%/}/observations_${REQUEST_ID}.gz"
+    CSV_FILE="${TMP_DIR%/}/observations_${REQUEST_ID}.csv"
+    TEMP_FILE="${TMP_DIR%/}/observations_${REQUEST_ID}_transformed.csv"
+
 
     echo "📥 Downloading: $FILE_URL..."
     curl -s -o "$COMPRESSED_FILE" "$FILE_URL"
