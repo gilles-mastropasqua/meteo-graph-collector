@@ -20,20 +20,19 @@ This project is a **data collection system** that fetches and processes meteorol
 git clone https://github.com/gilles-mastropasqua/METEO-FRANCE-API-COLLECTOR.git
 cd METEO-FRANCE-API-COLLECTOR
 ```
+
 ### 2️⃣ Configure the environment
 ```sh
 cp config-example.env config.env
 ```
 
-Edit config.env:
-
+Edit **config.env**:
 ```
 # Database connection
 DB_URL="postgresql://postgres:yourpassword@192.168.1.114:5432/meteo_data"
 
-# API URL
+# API URLs
 API_URL="https://www.data.gouv.fr/api/2/datasets/6569b4473bedf2e7abad3b72/resources/?page=1&page_size=10000"
-
 POSTES_CSV_URL="https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/POSTES/POSTES_MF.csv"
 
 # Other configurations
@@ -43,16 +42,60 @@ TMP_DIR="$SCRIPT_DIR/tmp"
 LOG_DIR="$SCRIPT_DIR/logs"
 ```
 
-### 3️⃣ Make scripts executable
+### 3️⃣ Install dependencies
+Ensure **PostgreSQL** and `psql` are installed on your system.
+
+For Debian/Ubuntu:
+```sh
+sudo apt update && sudo apt install postgresql postgresql-client -y
+```
+
+For macOS (using Homebrew):
+```sh
+brew install postgresql
+```
+
+---
+
+## 🛢 Database Setup
+
+Before running the collector, you need to create the required **PostgreSQL tables**.
+
+### 1️⃣ Ensure your PostgreSQL server is running
+```sh
+sudo systemctl start postgresql   # Linux
+brew services start postgresql    # macOS
+```
+
+### 2️⃣ Run the database setup script
+```sh
+cd database
+chmod +x setup-database.sh
+./setup-database.sh
+```
+This script will:
+- Create necessary tables if they don’t exist.
+- Apply the latest schema (`schema.sql`).
+- Log output in `database/logs/schema.log`.
+
+To reset the database, run:
+```sh
+psql "$DB_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+./setup-database.sh
+```
+
+---
+
+## 🚀 Running the Data Collection
+
+### 1️⃣ Make scripts executable
 ```sh
 chmod +x collector.sh
 chmod +x postes/get-postes.sh
 chmod +x observations/horaires/get-observations-horaire.sh
 ```
 
-### 4️⃣ Run the data collection
-
-To execute manually:
+### 2️⃣ Run the data collection manually
 ```sh
 ./collector.sh
 ```
@@ -66,11 +109,20 @@ To run individual scripts:
 ---
 
 ## 🕒 Automate with cron
-To run the collector every hour, add this to your crontab:
+
+To run the collector **every hour**, add this to your crontab:
 ```sh
 0 * * * * /path/to/collector.sh >> /path/to/logs/collector.log 2>&1
 ```
+
 Edit your cron jobs with:
 ```sh
 crontab -e
-``
+```
+
+---
+
+## 📜 License
+For details, see the [LICENSE](LICENSE) file.
+
+

@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Load configuration variables
 source "$SCRIPT_DIR/config.env"
+source "$SCRIPT_DIR/utils/slog.sh"
 
 # Ensure the scripts are executable
 chmod +x "$SCRIPT_DIR/postes/get-postes.sh"
@@ -18,14 +19,14 @@ mkdir -p "$SCRIPT_DIR/postes/tmp" "$SCRIPT_DIR/postes/logs"
 mkdir -p "$SCRIPT_DIR/observations/horaires/tmp" "$SCRIPT_DIR/observations/horaires/logs"
 
 # Execute get-postes.sh and log output
-echo "🚀 Running postes collector..."
+log_info "Running postes collector..."
 "$SCRIPT_DIR/postes/get-postes.sh" > "$SCRIPT_DIR/postes/logs/postes_$TIMESTAMP.log" 2>&1
-echo "✅ Postes collection completed."
+log_success "Postes collection completed."
 
 # Execute get-observations-horaire.sh and log output
-echo "🚀 Running observations collector..."
+log_info "Running observations collector... (this may take a while)"
 "$SCRIPT_DIR/observations/horaires/get-observations-horaire.sh" latest-2024-2025 > "$SCRIPT_DIR/observations/horaires/logs/observations_$TIMESTAMP.log" 2>&1
-echo "✅ Observations collection completed."
+log_success "Observations collection completed."
 
 # Print completion message with timestamp
-echo "🎯 All collections completed at $(date)."
+log_success "All collections completed at $(date)."

@@ -2,26 +2,27 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../config.env"
+source "$SCRIPT_DIR/../utils/slog.sh"
 
 mkdir -p "$TMP_DIR" "$LOG_DIR"
 
 TOTAL_START_TIME=$(date +%s)
 
-echo "🔍 Fetching postes list from: $POSTES_CSV_URL"
+log_info "Fetching postes list from: $POSTES_CSV_URL"
 POSTE_CSV=$(curl -s "$POSTES_CSV_URL")
 
 if [ -z "$POSTE_CSV" ]; then
-    echo "❌ ERROR: Unable to fetch postes list."
+    log_error "Unable to fetch postes list."
     exit 1
 fi
 
 REQUEST_ID=$(date +%s%N)
 TEMP_FILE="$TMP_DIR/postes_${REQUEST_ID}.csv"
 
-#echo "🔍 First 5 lines of the raw CSV file:"
-#echo "$POSTE_CSV" | head -n 5
+#log_info "First 5 lines of the raw CSV file:"
+#log_info "$POSTE_CSV" | head -n 5
 
-echo "🛢️ Detecting columns and transforming to camelCase..."
+log_info "Detecting columns and transforming to camelCase..."
 
 # Extract header (first line)
 HEADER=$(echo "$POSTE_CSV" | head -n 1)
@@ -43,7 +44,7 @@ for col in $(echo "$HEADER" | tr ';' '\n'); do
     CAMELCASE_HEADER+=",\"$(camel_case "$col")\""
 done
 
-echo "✅ Transformed columns: $CAMELCASE_HEADER"
+log_info "Transformed columns: $CAMELCASE_HEADER"
 
 # Process data and write to TEMP_FILE
 {
@@ -76,24 +77,24 @@ echo "✅ Transformed columns: $CAMELCASE_HEADER"
 } > "$TEMP_FILE"
 
 
-#echo "🔍 First 5 lines of the processed CSV file:"
+#log_info "First 5 lines of the processed CSV file:"
 #head -n 5 "$TEMP_FILE"
 
-echo "✅ Processed data written to: $TEMP_FILE"
+log_info "Processed data written to: $TEMP_FILE"
 
 # Ensure the staging table exists
-echo "🛢️ Creating staging table if not exists..."
+log_info "Creating staging table if not exists..."
 psql "$DB_URL" -A -t -c "CREATE TABLE IF NOT EXISTS staging_postes AS TABLE \"$POSTE_TABLE\" WITH NO DATA;" > /dev/null 2>&1
-echo "✅ Staging table is ready."
+log_info "Staging table is ready."
 
-echo "📥 Copying data to staging_postes..."
+log_info "Copying data to staging_postes..."
 psql "$DB_URL" -c "\copy staging_postes ($CAMELCASE_HEADER) FROM '$TEMP_FILE' WITH CSV HEADER DELIMITER ','" > /dev/null 2>&1
 
 COPIED_COUNT=$(psql "$DB_URL" -A -t -c "SELECT COUNT(*) FROM staging_postes;")
-echo "🔍 Number of rows copied to staging_postes: $COPIED_COUNT"
+log_info "Number of rows copied to staging_postes: $COPIED_COUNT"
 
 # Insert into the main table with upsert logic
-echo "🛢️ Inserting into the main table Poste..."
+log_info "Inserting into the main table Poste..."
 INSERTED_COUNT=$(psql "$DB_URL" -A -t -c "
     WITH inserted AS (
         INSERT INTO \"$POSTE_TABLE\" ($CAMELCASE_HEADER)
@@ -105,16 +106,16 @@ INSERTED_COUNT=$(psql "$DB_URL" -A -t -c "
     SELECT COUNT(*) FROM inserted;
 ")
 
-echo "✅ Number of rows inserted or updated: $INSERTED_COUNT"
+log_info "Number of rows inserted or updated: $INSERTED_COUNT"
 
-echo "🧹 Cleaning up staging_postes..."
+log_info "Cleaning up staging_postes..."
 psql "$DB_URL" -A -t -c "TRUNCATE TABLE staging_postes;" > /dev/null 2>&1
-echo "✅ Staging table cleaned."
+log_info "Staging table cleaned."
 
-echo "🧹 Deleting temp file: $TEMP_FILE..."
+log_info "Deleting temp file: $TEMP_FILE..."
 rm -f "$TEMP_FILE"
-echo "✅ Temp file deleted."
+log_info "Temp file deleted."
 
 TOTAL_END_TIME=$(date +%s)
 TOTAL_DURATION=$((TOTAL_END_TIME - TOTAL_START_TIME))
-echo "⏳ Total execution time: $TOTAL_DURATION seconds."
+log_success "Total execution time: $TOTAL_DURATION seconds."
