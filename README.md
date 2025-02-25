@@ -1,27 +1,27 @@
-# 🌍 METEO-FRANCE API COLLECTOR
+# METEO-FRANCE API COLLECTOR
 
 This project is a **data collection system** that fetches and processes meteorological data from **Météo-France**. It consists of shell scripts that retrieve **weather station metadata (postes)** and **hourly weather observations** and store them in a **PostgreSQL database**.
 
-## 📌 Features
+## Features
 
-- 🛰 **Fetches station metadata** (postes) from official Météo-France sources.
-- ⏳ **Collects hourly weather observations** for a specified period.
-- 🔄 **Processes data** (date formatting, filtering).
-- 🛢 **Stores data in PostgreSQL**, using staging tables for upserts.
-- 📜 **Logs execution details** for monitoring.
-- 🕒 **Designed to run periodically** (e.g., every hour with `cron`).
+- **Fetches station metadata** (postes) from official Météo-France sources.
+- **Collects hourly weather observations** for a specified period.
+- **Processes data** (date formatting, filtering).
+- **Stores data in PostgreSQL**, using staging tables for upserts.
+- **Logs execution details** for monitoring.
+- **Designed to run periodically** (e.g., every hour with `cron`).
 
 ---
 
-## ⚙️ Setup
+## Setup
 
-### 1️⃣ Clone the repository
+### Clone the repository
 ```sh
 git clone https://github.com/gilles-mastropasqua/METEO-FRANCE-API-COLLECTOR.git
 cd METEO-FRANCE-API-COLLECTOR
 ```
 
-### 2️⃣ Configure the environment
+### Configure the environment
 ```sh
 cp config-example.env config.env
 ```
@@ -42,7 +42,7 @@ TMP_DIR="$SCRIPT_DIR/tmp"
 LOG_DIR="$SCRIPT_DIR/logs"
 ```
 
-### 3️⃣ Install dependencies
+### Install dependencies
 Ensure **PostgreSQL** and `psql` are installed on your system.
 
 For Debian/Ubuntu:
@@ -57,17 +57,17 @@ brew install postgresql
 
 ---
 
-## 🛢 Database Setup
+## Database Setup
 
 Before running the collector, you need to create the required **PostgreSQL tables**.
 
-### 1️⃣ Ensure your PostgreSQL server is running
+### Ensure your PostgreSQL server is running
 ```sh
 sudo systemctl start postgresql   # Linux
 brew services start postgresql    # macOS
 ```
 
-### 2️⃣ Run the database setup script
+### Run the database setup script
 ```sh
 cd database
 chmod +x setup-database.sh
@@ -86,16 +86,16 @@ psql "$DB_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
 ---
 
-## 🚀 Running the Data Collection
+## Running the Data Collection
 
-### 1️⃣ Make scripts executable
+### Make scripts executable
 ```sh
 chmod +x collector.sh
 chmod +x postes/get-postes.sh
 chmod +x observations/horaires/get-observations-horaire.sh
 ```
 
-### 2️⃣ Run the data collection manually
+### Run the data collection manually
 ```sh
 ./collector.sh
 ```
@@ -108,7 +108,7 @@ To run individual scripts:
 
 ---
 
-## 🕒 Automate with cron
+## Automate with cron
 
 To run the collector **every hour**, add this to your crontab:
 ```sh
@@ -122,7 +122,7 @@ crontab -e
 
 ---
 
-## 📜 License
+## License
 For details, see the [LICENSE](LICENSE) file.
 
 
