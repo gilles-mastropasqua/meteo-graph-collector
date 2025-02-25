@@ -37,12 +37,12 @@ log_info ""
 log_info "--------------------------------------------------------------"
 log_info ""
 
-# Cleanup main table
-# log_info "Cleaning the main table: $OBSERVATIONS_HORAIRE_TABLE..."
-# START_TIME=$(date +%s)
-# psql "$DB_URL" -A -t -c "TRUNCATE TABLE \"$OBSERVATIONS_HORAIRE_TABLE\";" > /dev/null 2>&1
-# END_TIME=$(date +%s)
-# log_info "Main table cleaned in $((END_TIME - START_TIME)) seconds."
+## Cleanup main table
+#log_info "Cleaning the main table: $OBSERVATIONS_HORAIRE_TABLE..."
+#START_TIME=$(date +%s)
+#psql "$DB_URL" -A -t -c "TRUNCATE TABLE \"$OBSERVATIONS_HORAIRE_TABLE\";" > /dev/null 2>&1
+#END_TIME=$(date +%s)
+#log_info "Main table cleaned in $((END_TIME - START_TIME)) seconds."
 
 # Create staging table if not exists
 log_info "Ensuring staging table exists..."
