@@ -157,6 +157,7 @@ for FILE_URL in $FILE_URLS; do
     psql "$DB_URL" -c "
         INSERT INTO \"$OBSERVATIONS_HORAIRE_TABLE\" ($DB_COLUMNS)
         SELECT $DB_COLUMNS FROM staging_observations
+        WHERE \"numPoste\" IN (SELECT \"numPoste\" FROM \"$POSTE_TABLE\")
         ON CONFLICT (\"numPoste\", \"dateObservation\")
         DO UPDATE SET
         $(echo "$DB_COLUMNS" | awk -F',' '{for (i=2; i<=NF; i++) print $i" = EXCLUDED."$i","}' | sed '$s/,$//');
