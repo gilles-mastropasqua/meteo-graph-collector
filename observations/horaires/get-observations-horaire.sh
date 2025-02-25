@@ -64,7 +64,6 @@ for FILE_URL in $FILE_URLS; do
     CSV_FILE="${TMP_DIR%/}/observations_${REQUEST_ID}.csv"
     TEMP_FILE="${TMP_DIR%/}/observations_${REQUEST_ID}_transformed.csv"
 
-
     log_info "Downloading: $FILE_URL..."
     curl -s -o "$COMPRESSED_FILE" "$FILE_URL"
 
@@ -139,10 +138,13 @@ for FILE_URL in $FILE_URLS; do
 
     log_info "Temporary file generated: $TEMP_FILE"
 
+#    head -n 20 "$TEMP_FILE"
+#    sort "$TEMP_FILE" | uniq -c | sort -nr | head -20
+
     DB_COLUMNS=$(echo "$CAMELCASE_HEADER" | awk -F';' '{for (i=1; i<=NF; i++) printf "\"%s\"%s", $i, (i==NF ? "" : ",")}')
 
-
     log_info "Copying data to staging_observations..."
+    psql "$DB_URL" -A -t -c "TRUNCATE TABLE staging_observations;" > /dev/null 2>&1
     psql "$DB_URL" -A -t -c "\copy staging_observations ($DB_COLUMNS) FROM '$TEMP_FILE' WITH CSV HEADER DELIMITER ';'" > /dev/null 2>&1
 
     COPIED_COUNT=$(psql "$DB_URL" -A -t -c "SELECT COUNT(*) FROM staging_observations;")
@@ -151,19 +153,19 @@ for FILE_URL in $FILE_URLS; do
     BEFORE_COUNT=$(psql "$DB_URL" -A -t -c "SELECT COUNT(*) FROM \"$OBSERVATIONS_HORAIRE_TABLE\";")
     log_info "Rows in $OBSERVATIONS_HORAIRE_TABLE before insertion: $BEFORE_COUNT"
 
-    log_info "Inserting data into main table..."
-    INSERTED=$(psql "$DB_URL" -A -t -c "
-        WITH inserted AS (
-            INSERT INTO \"$OBSERVATIONS_HORAIRE_TABLE\" ($DB_COLUMNS)
-            SELECT $DB_COLUMNS FROM staging_observations
-            WHERE \"numPoste\" IN (SELECT \"numPoste\" FROM \"$POSTE_TABLE\")
-            ON CONFLICT (\"numPoste\", \"dateObservation\")
-            DO UPDATE SET $(echo "$DB_COLUMNS" | awk -F',' '{for (i=2; i<=NF; i++) print $i" = EXCLUDED."$i","}' | sed '$s/,$//')
-            RETURNING *
-        )
-        SELECT COUNT(*) FROM inserted;
-    ")
-    log_info "Rows inserted or updated: $INSERTED"
+    log_info "Inserting or updating data in main table..."
+    psql "$DB_URL" -c "
+        INSERT INTO \"$OBSERVATIONS_HORAIRE_TABLE\" ($DB_COLUMNS)
+        SELECT $DB_COLUMNS FROM staging_observations
+        ON CONFLICT (\"numPoste\", \"dateObservation\")
+        DO UPDATE SET
+        $(echo "$DB_COLUMNS" | awk -F',' '{for (i=2; i<=NF; i++) print $i" = EXCLUDED."$i","}' | sed '$s/,$//');
+    "
+
+    INSERTED_COUNT=$(psql "$DB_URL" -A -t -c "SELECT COUNT(*) FROM staging_observations;")
+
+    log_success "Total rows inserted or updated: $INSERTED_COUNT"
+
     TOTAL_INSERTED=$((TOTAL_INSERTED + INSERTED))
 
     AFTER_COUNT=$(psql "$DB_URL" -A -t -c "SELECT COUNT(*) FROM \"$OBSERVATIONS_HORAIRE_TABLE\";")
