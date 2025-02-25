@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export TERM=xterm
+
 # Get the script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
