@@ -161,13 +161,13 @@ for FILE_URL in $FILE_URLS; do
         ON CONFLICT (\"numPoste\", \"dateObservation\")
         DO UPDATE SET
         $(echo "$DB_COLUMNS" | awk -F',' '{for (i=2; i<=NF; i++) print $i" = EXCLUDED."$i","}' | sed '$s/,$//');
-    "
+    " > /dev/null 2>&1
 
     INSERTED_COUNT=$(psql "$DB_URL" -A -t -c "SELECT COUNT(*) FROM staging_observations;")
 
     log_success "Total rows inserted or updated: $INSERTED_COUNT"
 
-    TOTAL_INSERTED=$((TOTAL_INSERTED + INSERTED))
+    TOTAL_INSERTED=$((TOTAL_INSERTED + INSERTED_COUNT))
 
     AFTER_COUNT=$(psql "$DB_URL" -A -t -c "SELECT COUNT(*) FROM \"$OBSERVATIONS_HORAIRE_TABLE\";")
     log_info "Rows in $OBSERVATIONS_HORAIRE_TABLE after insertion: $AFTER_COUNT"
