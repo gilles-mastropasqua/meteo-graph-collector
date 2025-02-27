@@ -1,7 +1,7 @@
-# METEO-FRANCE API COLLECTOR
+# meteo-graph-collector
 
 This project is a **data collection system** that fetches and processes meteorological data from **Météo-France**. It consists of shell scripts that retrieve **weather station metadata (postes)** and **hourly weather observations** and store them in a **PostgreSQL database**.
-
+This collector is designed to work with the [meteo-graph-api](https://github.com/gilles-mastropasqua/meteo-graph-api) repository.
 ## Features
 
 - **Fetches station metadata** (postes) from official Météo-France sources.
