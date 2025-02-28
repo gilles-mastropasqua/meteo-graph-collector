@@ -5,6 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../../config.env"
 source "$SCRIPT_DIR/../../utils/slog.sh"
 
+set +e
+
 mkdir -p "$TMP_DIR" "$LOG_DIR"
 
 # Check if PERIOD is provided
@@ -72,12 +74,43 @@ for FILE_URL in $FILE_URLS; do
         continue
     fi
 
-    log_info "Decompressing file..."
-    gunzip -c "$COMPRESSED_FILE" > "$CSV_FILE"
 
-    if [ ! -s "$CSV_FILE" ]; then
-        log_error "Decompression failed."
-        continue
+    log_info "Checking integrity of $COMPRESSED_FILE..."
+
+    if ! gzip -t "$COMPRESSED_FILE" 2>/dev/null; then
+        log_warning "File $COMPRESSED_FILE is corrupted. Attempting recovery..."
+
+        gzip -dc "$COMPRESSED_FILE" > "$CSV_FILE" 2>/dev/null
+
+        ORIGINAL_LINES=$(wc -l < "$CSV_FILE")
+        if [ "$ORIGINAL_LINES" -eq 0 ]; then
+            log_error "No lines extracted from $COMPRESSED_FILE. Skipping file..."
+            rm -f "$COMPRESSED_FILE" "$CSV_FILE"
+            continue
+        fi
+
+        awk -F";" 'NF == 204' "$CSV_FILE" > "$CSV_FILE.cleaned"
+
+        CLEANED_LINES=$(wc -l < "$CSV_FILE.cleaned")
+        log_info "Recovered $CLEANED_LINES / $ORIGINAL_LINES lines from corrupted file."
+
+        if [ "$CLEANED_LINES" -eq 0 ]; then
+            log_error "No valid lines could be recovered. Skipping file..."
+            rm -f "$COMPRESSED_FILE" "$CSV_FILE" "$CSV_FILE.cleaned"
+            log_info ""
+            log_info "--------------------------------------------------------------"
+            log_info ""
+            continue
+        fi
+
+        mv "$CSV_FILE.cleaned" "$CSV_FILE"
+
+        log_success "Corrupt file recovered with valid data."
+
+    else
+        log_info "File $COMPRESSED_FILE is valid."
+        log_info "Decompressing file..."
+        gunzip -c "$COMPRESSED_FILE" > "$CSV_FILE"
     fi
 
     log_info "Detecting column indexes..."
