@@ -67,11 +67,12 @@ log_info "Transformed columns: $CAMELCASE_HEADER"
         }
 
         {
+            numPoste = (length($1) == 7 ? "0" $1 : $1)
             posteOuvert = ($6 == "" ? "true" : "false")
             datouvr = format_date($5)  # `datouvr` (5e colonne)
             datferm = format_date($6)  # `datferm` (6e colonne)
 
-            print posteOuvert, $1, quote($2), quote($3), quote($4), datouvr, datferm, $7, $8, $9, $10, $11, $12
+            print posteOuvert, numPoste, quote($2), quote($3), quote($4), datouvr, datferm, $7, $8, $9, $10, $11, $12
         }
     '
 } > "$TEMP_FILE"

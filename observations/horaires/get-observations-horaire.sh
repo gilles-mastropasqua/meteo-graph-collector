@@ -163,7 +163,9 @@ for FILE_URL in $FILE_URLS; do
             dateObs = sprintf("%04d-%02d-%02dT%02d:00:00.000Z", year, month, day, hour);
 
             gsub(/^ +| +$/, "", $(numPosteIdx + 1));
-            $(numPosteIdx + 1) = sprintf("%08d", $(numPosteIdx + 1));
+            if (length($(numPosteIdx + 1)) == 7) {
+                $(numPosteIdx + 1) = "0" $(numPosteIdx + 1);  # Ajoute un zéro au début
+            }
 
             print dateObs, $0;
         }'
